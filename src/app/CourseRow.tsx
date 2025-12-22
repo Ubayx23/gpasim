@@ -29,6 +29,8 @@ export default function CourseRow({ course, onRemove, onUpdate }: CourseRowProps
         className={styles.courseUnits}
         value={course.units || ""}
         onChange={(e) => onUpdate('units', e.target.value)}
+        min="0"
+        step="1"
       />
       <select 
         className={styles.courseGrade} 

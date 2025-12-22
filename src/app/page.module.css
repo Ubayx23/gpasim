@@ -51,7 +51,7 @@
 .coursesContainer {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .courseRow {
@@ -115,7 +115,7 @@
 
 .addButton {
   width: fit-content;
-  margin-top: 4px;
+  margin-top: 8px;
   padding: 12px 24px;
   border: none;
   border-radius: 6px;
