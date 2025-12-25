@@ -33,20 +33,29 @@ export default function Home() {
   };
 
   // Update a course field (name, units, or grade)
-  // Converts units string to number, handles invalid input
+  // Converts units string to number, validates input (must be > 0)
   const handleUpdateCourse = (courseId: string, field: 'name' | 'units' | 'grade', value: string) => {
     setCourses(courses.map(course => {
       if (course.id === courseId) {
         if (field === 'units') {
-          // Convert to number, ensure non-negative, default to 0 for invalid input
+          // Convert to number, ensure positive integer (units must be > 0)
           const numValue = Number(value);
-          const validUnits = (isNaN(numValue) || numValue < 0) ? 0 : Math.floor(numValue);
-          return { ...course, [field]: validUnits };
+          // Allow empty string for input field, but store as 0 temporarily
+          // Validation happens when calculating GPA (only courses with units > 0 are counted)
+          if (value === '' || isNaN(numValue) || numValue <= 0) {
+            return { ...course, [field]: 0 };
+          }
+          return { ...course, [field]: Math.floor(numValue) };
         }
         return { ...course, [field]: value };
       }
       return course;
     }));
+  };
+
+  // Clear all courses from the list
+  const handleClearAll = () => {
+    setCourses([]);
   };
 
   // Convert letter grade to points (4.0 scale)
@@ -78,19 +87,51 @@ export default function Home() {
     }
   }
 
-  // Calculate GPA: divide weighted points by graded units
+  // Calculate Cumulative GPA: automatically calculated from all courses entered
+  // Formula: (sum of gradePoints × units) / (sum of units for graded courses)
+  // This is calculated automatically as courses are added/updated
   // Handle edge cases: no graded courses, division by zero, NaN
-  const gpa = gradedUnits > 0 && !isNaN(totalWeightedPoints / gradedUnits)
-    ? totalWeightedPoints / gradedUnits
+  // Always round to 2 decimal places for display
+  const cumulativeGPA = gradedUnits > 0 && !isNaN(totalWeightedPoints / gradedUnits)
+    ? Number((totalWeightedPoints / gradedUnits).toFixed(2))
     : 0;
+
+  // Cumulative units: total units from all courses with grades
+  // This is automatically calculated from all entered courses
+  const cumulativeUnits = gradedUnits;
 
   return (
     <div className={styles.page}>
       <main className={styles.main}>
         <header className={styles.header}>
           <h1 className={styles.title}>GPASim</h1>
-          <p className={styles.subtitle}>Simulate your semester GPA</p>
+          <p className={styles.subtitle}>Simulate your semester and cumulative GPA</p>
         </header>
+
+        {/* Cumulative GPA Display Section: Automatically calculated from all courses entered */}
+        <section className={styles.cumulativeSection}>
+          <h2 className={styles.sectionTitle}>Cumulative GPA</h2>
+          <div className={styles.cumulativeInputs}>
+            <div className={styles.cumulativeInputGroup}>
+              <label className={styles.cumulativeLabel}>
+                Current Cumulative GPA
+              </label>
+              {/* Display-only field showing GPA calculated from all courses */}
+              <div className={styles.cumulativeDisplay}>
+                {cumulativeGPA.toFixed(2)}
+              </div>
+            </div>
+            <div className={styles.cumulativeInputGroup}>
+              <label className={styles.cumulativeLabel}>
+                Units Completed So Far
+              </label>
+              {/* Display-only field showing total units from all courses */}
+              <div className={styles.cumulativeDisplay}>
+                {cumulativeUnits}
+              </div>
+            </div>
+          </div>
+        </section>
 
         <section className={styles.coursesSection}>
           <h2 className={styles.sectionTitle}>Courses</h2>
@@ -109,9 +150,16 @@ export default function Home() {
               </p>
             )}
           </div>
-          <button className={styles.addButton} onClick={handleAddCourse}>
-            Add Course
-          </button>
+          <div className={styles.buttonGroup}>
+            <button className={styles.addButton} onClick={handleAddCourse}>
+              Add Course
+            </button>
+            {courses.length > 0 && (
+              <button className={styles.clearButton} onClick={handleClearAll}>
+                Clear All
+              </button>
+            )}
+          </div>
         </section>
 
         <section className={styles.resultsSection}>
@@ -124,9 +172,18 @@ export default function Home() {
             <div className={styles.resultItem}>
               <span className={styles.resultLabel}>Semester GPA:</span>
               <span className={styles.resultValue}>
-                {isNaN(gpa) ? "0.00" : gpa.toFixed(2)}
+                {cumulativeGPA.toFixed(2)}
               </span>
             </div>
+            {/* Cumulative GPA: Automatically calculated from all courses entered */}
+            {cumulativeUnits > 0 && (
+              <div className={styles.resultItem}>
+                <span className={styles.resultLabel}>Cumulative GPA:</span>
+                <span className={styles.resultValue}>
+                  {cumulativeGPA.toFixed(2)}
+                </span>
+              </div>
+            )}
           </div>
         </section>
       </main>
